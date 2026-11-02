@@ -24,10 +24,18 @@ jobs:
           gradle-version: '8.9'
 
       - name: Compila
-        run: gradle assembleDebug --no-daemon
-
-      - name: Rinomina l'APK
-        run: cp app/build/outputs/apk/debug/app-debug.apk home-tv.apk
+        run: |
+          SETTINGS=$(find . -name settings.gradle -not -path './.git/*' | head -n 1)
+          if [ -z "$SETTINGS" ]; then
+            echo "ERRORE: non trovo il file settings.gradle nel repository. File presenti:"
+            find . -not -path './.git/*' -type f | head -n 60
+            exit 1
+          fi
+          DIR=$(dirname "$SETTINGS")
+          echo "Progetto trovato in: $DIR"
+          cd "$DIR"
+          gradle assembleDebug --no-daemon
+          cp app/build/outputs/apk/debug/app-debug.apk "$GITHUB_WORKSPACE/home-tv.apk"
 
       - name: Pubblica l'APK
         uses: softprops/action-gh-release@v2
